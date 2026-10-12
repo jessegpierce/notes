@@ -57,6 +57,11 @@ input.box,.fld input,.fld select{display:block;width:100%;margin-top:4px;font:in
 .list li:last-child label{border-bottom:0}
 .list input{width:1.25em;height:1.25em;margin-top:.15em;flex:none;accent-color:var(--accent)}
 .list .done span{text-decoration:line-through;color:var(--muted)}
+.loc{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.loc .place{font-weight:600;word-wrap:break-word}
+.map{display:block;width:100%;height:190px;border:0;border-radius:10px;margin-top:10px;background:var(--bg)}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.links a{font-size:15px;font-weight:600;text-decoration:none;color:var(--accent);background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:7px 12px}
 .rem{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:15px;color:var(--muted)}
 #lk{text-align:center}
 #lk .lockico{font-size:44px}
@@ -131,11 +136,23 @@ input.box,.fld input,.fld select{display:block;width:100%;margin-top:4px;font:in
   </div>
 
   <div class="card">
+    <h2>Location (optional)</h2>
+    <input type="text" class="box" id="la" maxlength="200" placeholder="Address, place name, or paste a Maps link">
+    <div class="row" style="margin-top:8px">
+      <button class="chip" id="locHere">📍 Use my location</button>
+      <button class="chip" id="locFind">Find on map</button>
+      <button class="chip" id="locClear">Clear</button>
+    </div>
+    <div class="small" id="locMsg" hidden></div>
+    <div id="locPrev"></div>
+  </div>
+
+  <div class="card">
     <h2>PIN lock (optional)</h2>
     <input type="password" class="box" id="pn" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="4 or more numbers">
     <div class="small" id="pinNow" hidden>This note is locked. Leave the box empty to keep the same PIN, or type a new one to change it.</div>
     <button class="chip" id="pinRemove" style="margin-top:8px" hidden>Remove PIN</button>
-    <div class="small">The note's text is scrambled with your PIN, so nobody can read it without the PIN, even from the link. <b>If you forget the PIN, the note can't be recovered.</b> The title stays visible because it's shown on the icon.</div>
+    <div class="small">The note's text and location are scrambled with your PIN, so nobody can read them without the PIN, even from the link. <b>If you forget the PIN, the note can't be recovered.</b> The title stays visible because it's shown on the icon.</div>
     <div class="err" id="pinErr" hidden></div>
   </div>
 
@@ -166,6 +183,7 @@ input.box,.fld input,.fld select{display:block;width:100%;margin-top:4px;font:in
 <div id="vw" hidden>
   <div class="hint" id="hint" hidden><b>Saved.</b> Now tap Safari's Share button, then <b>Add to Home Screen</b>.</div>
   <div class="card"><div class="band"></div><h1 id="vt"></h1><div id="vb"></div>
+    <div class="loc" id="vloc" hidden></div>
     <div class="rem" id="vr" hidden></div></div>
   <button class="btn" id="cal" hidden>Add to Calendar</button>
   <button class="btn alt" id="share">Share</button>
@@ -180,9 +198,10 @@ var $=function(i){return document.getElementById(i)};
 var COLORS=['#f5c518','#ff9f0a','#ff453a','#ff2d55','#bf5af2','#5e5ce6','#0a84ff','#30b0c7','#34c759','#8e8e93','#1c1c1e','#ffffff'];
 // Everything about a note. Short names keep the link short:
 // t title, b text, k type, z text size, th background, c color, s icon style, e emoji, p photo,
-// ic small icon text, r reminder, rp repeat, al alert, x locked (scrambled) text, id note id
-var KEYS=['t','b','k','z','th','c','s','e','ic','r','rp','al','x','id','p'];
-var DEFAULTS={t:'',b:'',k:'',z:'m',th:'',c:COLORS[0],s:'text',e:'📝',ic:'',r:'',rp:'',al:'0',x:'',id:'',p:''};
+// ic small icon text, r reminder, rp repeat, al alert, la place/address, ll map pin (lat,lng),
+// x locked (scrambled) text, id note id
+var KEYS=['t','b','la','ll','k','z','th','c','s','e','ic','r','rp','al','x','id','p'];
+var DEFAULTS={t:'',b:'',la:'',ll:'',k:'',z:'m',th:'',c:COLORS[0],s:'text',e:'📝',ic:'',r:'',rp:'',al:'0',x:'',id:'',p:''};
 var st=JSON.parse(JSON.stringify(DEFAULTS));
 var pin='';          // PIN for this note while it's unlocked (never saved)
 var lastSaved=null;  // what the link currently holds
@@ -242,7 +261,10 @@ async function unlockText(p,x){
 /* ---------- saving ---------- */
 async function persist(){
   var o={};KEYS.forEach(function(k){o[k]=st[k]});
-  if(pin){o.x=await lockText(pin,st.b);o.b=''}else o.x='';
+  if(pin){ // text and location are both scrambled
+    o.x=await lockText(pin,JSON.stringify({_v:2,b:st.b,la:st.la,ll:st.ll}));
+    o.b='';o.la='';o.ll='';
+  }else o.x='';
   st.x=o.x;lastSaved=o;
   history.replaceState(null,'','#'+toHash(o,false));
   try{localStorage.setItem('note_'+st.id,JSON.stringify(o))}catch(e){}
@@ -266,6 +288,50 @@ function makeBold(){
     ta.value=v.slice(0,a)+'**bold text**'+v.slice(z);ta.setSelectionRange(a+2,a+11);
   }
   ta.focus();
+}
+
+/* ---------- location ---------- */
+function findCoords(s){ // finds "48.14, -103.62" in plain text or in Google/Apple Maps links
+  try{s=decodeURIComponent(s)}catch(e){}
+  var m=/(-?\d{1,2}\.\d{3,})\s*,\s*(-?\d{1,3}\.\d{3,})/.exec(s);
+  if(!m) return '';
+  var a=parseFloat(m[1]),b=parseFloat(m[2]);
+  if(Math.abs(a)>90||Math.abs(b)>180) return '';
+  return a.toFixed(6)+','+b.toFixed(6);
+}
+function mapFrame(ll){
+  var p=ll.split(','),lat=+p[0],lng=+p[1],dy=0.006,dx=dy/Math.max(Math.cos(lat*Math.PI/180),0.2);
+  var f=document.createElement('iframe');f.className='map';f.loading='lazy';f.title='Map';
+  f.src='https://www.openstreetmap.org/export/embed.html?bbox='+(lng-dx)+','+(lat-dy)+','+(lng+dx)+','+(lat+dy)+'&layer=mapnik&marker='+lat+','+lng;
+  return f;
+}
+function mapLinks(){
+  var q=st.la||'Pinned location',ll=st.ll;
+  return [
+    ['Open in Maps',ll?'https://maps.apple.com/?ll='+ll+'&q='+encodeURIComponent(q):'https://maps.apple.com/?q='+encodeURIComponent(st.la)],
+    ['Directions','https://maps.apple.com/?daddr='+(ll||encodeURIComponent(st.la))],
+    ['Google Maps','https://www.google.com/maps/search/?api=1&query='+(ll||encodeURIComponent(st.la))]
+  ];
+}
+function renderLoc(box,withMap){
+  box.innerHTML='';
+  if(!st.la&&!st.ll){box.hidden=true;return}
+  box.hidden=false;
+  var d=document.createElement('div');d.className='place';
+  d.textContent='📍 '+(st.la||'Pinned location')+(st.ll&&!st.la?' ('+st.ll.replace(',',', ')+')':'');
+  box.appendChild(d);
+  if(withMap&&st.ll) box.appendChild(mapFrame(st.ll));
+  var row=document.createElement('div');row.className='links';
+  mapLinks().forEach(function(l){var a=document.createElement('a');a.textContent=l[0];a.href=l[1];a.target='_blank';a.rel='noopener';row.appendChild(a)});
+  box.appendChild(row);
+}
+function locMsg(t){$('locMsg').textContent=t;$('locMsg').hidden=!t}
+function refreshLocEditor(){
+  var box=$('locPrev');box.innerHTML='';
+  if(st.ll){
+    box.appendChild(mapFrame(st.ll));
+    var s=document.createElement('div');s.className='small';s.textContent='Pinned at '+st.ll.replace(',',', ');box.appendChild(s);
+  }
 }
 
 /* ---------- checklist ---------- */
@@ -360,6 +426,14 @@ function buildIcs(){
   var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Home Screen Notes//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
     'UID:'+st.id+'@homescreen-notes','DTSTAMP:'+icsUTC(new Date()),'DTSTART:'+icsLocal(start),'DTEND:'+icsLocal(end),
     'SUMMARY:'+icsText(st.t),'DESCRIPTION:'+icsText(body+'\n\nOpen note: '+link),'URL:'+link];
+  if(!pin&&(st.la||st.ll)){
+    L.push('LOCATION:'+icsText(st.la||st.ll));
+    if(st.ll){
+      var g=st.ll.split(',');
+      L.push('GEO:'+g[0]+';'+g[1]);
+      L.push('X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-APPLE-RADIUS=70;X-TITLE="'+(st.la||'Pinned location').replace(/["\r\n]/g,'')+'":geo:'+st.ll);
+    }
+  }
   if(st.rp) L.push('RRULE:FREQ='+st.rp);
   if(st.al!=='-1') L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsText(st.t),'TRIGGER:-PT'+st.al+'M','END:VALARM');
   L.push('END:VEVENT','END:VCALENDAR');
@@ -407,6 +481,7 @@ function showEdit(){
   $('b').value=st.k==='list'?items().map(function(i){return i.text}).join('\n'):st.b;
   $('e').value=st.e;$('ic').value=st.ic;
   $('rd').value=st.r;$('rp').value=st.rp;$('al').value=st.al;
+  $('la').value=st.la;locMsg('');refreshLocEditor();
   $('pn').value='';$('pinErr').hidden=true;
   $('standNote').hidden=!standalone;
   show('ed');refreshEditor();
@@ -433,7 +508,7 @@ function showView(fresh){
   document.title=st.t||'Note';
   document.querySelector('meta[name=apple-mobile-web-app-title]').content=st.t||'Note';
   document.documentElement.style.setProperty('--note',st.s==='photo'?'var(--accent)':st.c);
-  $('vt').textContent=st.t;renderBody();
+  $('vt').textContent=st.t;renderBody();renderLoc($('vloc'),true);
   $('vr').textContent=reminderLine();$('vr').hidden=!st.r;$('cal').hidden=!st.r;
   $('lockNow').hidden=!pin;
   $('hint').hidden=!(fresh&&!standalone);
@@ -504,6 +579,8 @@ $('save').onclick=async function(){
   }else st.b=raw;
   st.e=$('e').value.trim()||'📝';st.ic=$('ic').value.trim();
   st.r=$('rd').value;st.rp=$('rp').value;st.al=$('al').value;
+  $('la').onchange.call($('la')); // in case a Maps link was pasted and the box never lost focus
+  st.la=$('la').value.trim();
   if(st.s==='photo'&&!st.p){alert('Choose a photo first, or pick a different icon style.');return}
   var np=$('pn').value.trim();
   if(np){
@@ -537,12 +614,56 @@ $('share').onclick=async function(){
   catch(e){prompt('Copy this link:',link);return}
   msg.hidden=false;
 };
-$('lockNow').onclick=function(){st.b='';pin='';showLock()};
+$('lockNow').onclick=function(){st.b='';st.la='';st.ll='';pin='';showLock()};
 $('unlock').onclick=async function(){
   var p=$('pinIn').value.trim();if(!p) return;
-  try{st.b=await unlockText(p,st.x);pin=p;showView(false)}
-  catch(e){$('lkErr').hidden=false;$('pinIn').value='';$('pinIn').focus()}
+  var txt;
+  try{txt=await unlockText(p,st.x)}
+  catch(e){$('lkErr').hidden=false;$('pinIn').value='';$('pinIn').focus();return}
+  var j=null;try{j=JSON.parse(txt)}catch(e){}
+  if(j&&j._v===2){st.b=j.b||'';st.la=j.la||'';st.ll=j.ll||''}else st.b=txt; // older locked notes held only text
+  pin=p;showView(false);
 };
+// location
+$('la').oninput=function(){st.la=this.value;if(st.ll){st.ll='';refreshLocEditor();locMsg('Address changed. Tap Find on map to pin it again.')}};
+$('la').onchange=function(){
+  var v=this.value.trim(),ll=findCoords(v);
+  if(ll){
+    st.ll=ll;
+    if(/^https?:/i.test(v)||/^[-\d.,\s]+$/.test(v)){st.la='';this.value=''} // a pasted link or bare numbers: keep only the pin
+    locMsg('Map pin set.');refreshLocEditor();
+  }
+};
+$('locHere').onclick=function(){
+  if(!navigator.geolocation){locMsg('This browser can\'t share your location.');return}
+  locMsg('Finding your location...');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    st.ll=pos.coords.latitude.toFixed(6)+','+pos.coords.longitude.toFixed(6);
+    locMsg('Pinned your current location (accurate to about '+Math.round(pos.coords.accuracy*3.281)+' feet).');
+    refreshLocEditor();
+    if(!$('la').value.trim()){ // try to fill in a readable address
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&lat='+pos.coords.latitude+'&lon='+pos.coords.longitude)
+        .then(function(r){return r.json()}).then(function(j){
+          if(j&&j.display_name&&!$('la').value.trim()){var a=j.display_name.split(', ').slice(0,4).join(', ');$('la').value=a;st.la=a}
+        }).catch(function(){});
+    }
+  },function(err){
+    locMsg(err.code===1?'Location permission was denied. To allow it: Settings → Privacy & Security → Location Services → Safari Websites.':'Couldn\'t get your location. Try again outside or with a better signal.');
+  },{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+};
+$('locFind').onclick=function(){
+  var q=$('la').value.trim();
+  if(!q){locMsg('Type an address or place name first.');return}
+  var ll=findCoords(q);if(ll){$('la').onchange.call($('la'));return}
+  locMsg('Searching...');
+  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q))
+    .then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.length){locMsg('Couldn\'t find that on the map. The Maps buttons will still search for it.');return}
+      st.ll=(+j[0].lat).toFixed(6)+','+(+j[0].lon).toFixed(6);
+      locMsg('Found: '+j[0].display_name);refreshLocEditor();
+    }).catch(function(){locMsg('Map search isn\'t available right now. The Maps buttons will still search for the address.')});
+};
+$('locClear').onclick=function(){st.la='';st.ll='';$('la').value='';locMsg('');refreshLocEditor()};
 $('pinIn').onkeydown=function(e){if(e.key==='Enter') $('unlock').onclick()};
 $('new').onclick=function(){
   if(standalone){window.open(pageUrl(),'_blank');return} // opens Safari, so this icon keeps its note
