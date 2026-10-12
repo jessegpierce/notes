@@ -41,6 +41,10 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
 #vw .band{height:8px;border-radius:14px 14px 0 0;margin:-16px -16px 14px;background:var(--note)}
 #vt{margin:0 0 10px;font-size:26px}
 #vb{white-space:pre-wrap;word-wrap:break-word}
+.fld{display:block;font-size:14px;color:var(--muted);margin-bottom:10px}
+.fld input,.fld select{display:block;width:100%;margin-top:4px;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;-webkit-appearance:none;appearance:none;min-height:44px}
+.row2{display:flex;gap:10px}.row2 .fld{flex:1}
+.rem{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:15px;color:var(--muted)}
 [hidden]{display:none!important}
 </style></head><body>
 
@@ -75,6 +79,24 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
   </div>
 
   <div class="card">
+    <h2>Reminder (optional)</h2>
+    <label class="fld">Date and time<input type="datetime-local" id="rd"></label>
+    <div class="row2">
+      <label class="fld">Repeat
+        <select id="rp">
+          <option value="">Never</option><option value="DAILY">Every day</option><option value="WEEKLY">Every week</option>
+          <option value="MONTHLY">Every month</option><option value="YEARLY">Every year</option>
+        </select></label>
+      <label class="fld">Alert
+        <select id="al">
+          <option value="0">At time of event</option><option value="10">10 minutes before</option><option value="60">1 hour before</option>
+          <option value="1440">1 day before</option><option value="-1">No alert</option>
+        </select></label>
+    </div>
+    <div class="small">After you save, tap <b>Add to Calendar</b>. Your iPhone's Calendar sends the alert, and the calendar event links back to this note.</div>
+  </div>
+
+  <div class="card">
     <h2>Preview</h2>
     <div class="preview">
       <div><img class="ico" id="pv" alt=""><div class="lbl" id="pl">Note</div></div>
@@ -87,15 +109,52 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
 
 <div id="vw" hidden>
   <div class="hint" id="hint" hidden><b>Saved.</b> Now tap Safari's Share button, then <b>Add to Home Screen</b>.</div>
-  <div class="card"><div class="band"></div><h1 id="vt"></h1><div id="vb"></div></div>
-  <button class="btn alt" id="edit">Edit</button>
+  <div class="card"><div class="band"></div><h1 id="vt"></h1><div id="vb"></div>
+    <div class="rem" id="vr" hidden></div></div>
+  <button class="btn" id="cal" hidden>Add to Calendar</button>
+  <button class="btn alt" id="edit" style="margin-top:10px">Edit</button>
   <button class="btn alt" id="new" style="margin-top:10px">New note</button>
 </div>
 
 <script>
 var $=function(i){return document.getElementById(i)};
 var COLORS=['#f5c518','#ff9f0a','#ff453a','#ff2d55','#bf5af2','#5e5ce6','#0a84ff','#30b0c7','#34c759','#8e8e93','#1c1c1e','#ffffff'];
-var st={id:'',t:'',b:'',c:COLORS[0],s:'text',e:'📝',p:''};
+var st={id:'',t:'',b:'',c:COLORS[0],s:'text',e:'📝',p:'',r:'',rp:'',al:'0'};
+var REPEAT={DAILY:'every day',WEEKLY:'every week',MONTHLY:'every month',YEARLY:'every year'};
+var ALERT={'0':'alert at time of event','10':'alert 10 minutes before','60':'alert 1 hour before','1440':'alert 1 day before','-1':'no alert'};
+
+function icsText(s){return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
+function icsDate(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
+function fold(line){ // calendar files want lines of 75 characters or less
+  var out='';while(line.length>74){out+=line.slice(0,74)+'\r\n ';line=line.slice(74)}return out+line;
+}
+function buildIcs(){
+  var start=new Date(st.r),end=new Date(start.getTime()+30*60000);
+  var link=location.href.length<6000?location.href:'';
+  var desc=st.b+(link?'\n\nOpen note: '+link:'');
+  var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Home Screen Notes//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
+    'UID:'+st.id+'@homescreen-notes','DTSTAMP:'+icsDate(new Date()),'DTSTART:'+icsDate(start),'DTEND:'+icsDate(end),
+    'SUMMARY:'+icsText(st.t),'DESCRIPTION:'+icsText(desc)];
+  if(link) L.push('URL:'+link);
+  if(st.rp) L.push('RRULE:FREQ='+st.rp);
+  if(st.al!=='-1') L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsText(st.t),'TRIGGER:-PT'+st.al+'M','END:VALARM');
+  L.push('END:VEVENT','END:VCALENDAR');
+  return L.map(fold).join('\r\n')+'\r\n';
+}
+function addToCalendar(){
+  var blob=new Blob([buildIcs()],{type:'text/calendar;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(st.t||'note').replace(/[^\w\- ]+/g,'').trim().slice(0,40)+'.ics';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},5000);
+}
+function reminderLine(){
+  if(!st.r) return '';
+  var d=new Date(st.r);
+  var when=d.toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+  return '⏰ '+when+(st.rp?', '+REPEAT[st.rp]:'')+' · '+ALERT[st.al];
+}
 var standalone=!!window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
 
 function inkFor(hex){
@@ -175,12 +234,14 @@ function applyHead(){
 function showView(fresh){
   applyHead();
   $('vt').textContent=st.t;$('vb').textContent=st.b;
+  $('vr').textContent=reminderLine();$('vr').hidden=!st.r;$('cal').hidden=!st.r;
   $('hint').hidden=!(fresh&&!standalone);
   $('ed').hidden=true;$('vw').hidden=false;
   window.scrollTo(0,0);
 }
 function showEdit(){
   $('t').value=st.t;$('b').value=st.b;$('e').value=st.e;
+  $('rd').value=st.r;$('rp').value=st.rp;$('al').value=st.al;
   $('standNote').hidden=!standalone;
   refreshPreview();
   $('vw').hidden=true;$('ed').hidden=false;
@@ -213,6 +274,7 @@ $('pf').onchange=function(){
 };
 $('save').onclick=function(){
   st.t=$('t').value.trim();st.b=$('b').value;
+  st.r=$('rd').value;st.rp=$('rp').value;st.al=$('al').value;
   if(!st.t){$('t').focus();return}
   if(st.s==='photo'&&!st.p){alert('Choose a photo first, or pick a different icon style.');return}
   if(!st.id) st.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -221,6 +283,7 @@ $('save').onclick=function(){
   showView(true);
 };
 $('edit').onclick=showEdit;
+$('cal').onclick=addToCalendar;
 $('new').onclick=function(){
   if(standalone){ // open a fresh editor in Safari, so this icon keeps its note
     window.open(location.href.split('#')[0],'_blank');return;
