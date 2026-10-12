@@ -6,7 +6,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Note">
-<link rel="apple-touch-icon" id="ati" href="">
+<link rel="icon" type="image/png" sizes="180x180" href="notes-icon.png">
+<link rel="apple-touch-icon" id="ati" href="notes-icon.png">
 <title>New Note</title>
 <style>
 :root{--bg:#f2f2f7;--card:#fff;--text:#111;--muted:#6b6b70;--line:#d8d8dd;--accent:#007aff;--note:#f5c518}
@@ -128,14 +129,49 @@ function icsDate(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/
 function fold(line){ // calendar files want lines of 75 characters or less
   var out='';while(line.length>74){out+=line.slice(0,74)+'\r\n ';line=line.slice(74)}return out+line;
 }
+// Local "wall clock" time with no time zone, so Calendar shows it in the phone's own time zone
+function icsLocal(d){
+  var p=function(n){return (n<10?'0':'')+n};
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00';
+}
+function pageUrl(){return location.href.split('#')[0]}
+// Readable link: #t=Oil+change&b=Every+5000+hours&c=f5c518 ...
+var DEFAULTS={c:COLORS[0],s:'text',e:'📝',p:'',r:'',rp:'',al:'0',id:''};
+function enc(v){
+  return encodeURIComponent(v).replace(/%20/g,'+').replace(/%2C/g,',').replace(/%3A/g,':').replace(/%2F/g,'/').replace(/%40/g,'@').replace(/%3F/g,'?');
+}
+function toHash(skipPhoto){
+  var parts=['t='+enc(st.t)];
+  if(st.b) parts.push('b='+enc(st.b));
+  ['c','s','e','r','rp','al','id','p'].forEach(function(k){
+    if(k==='p'&&skipPhoto) return;
+    var v=st[k];
+    if(k==='c') v=String(v).replace('#','');
+    if(v&&v!==String(DEFAULTS[k]).replace('#','')) parts.push(k+'='+enc(v));
+  });
+  return parts.join('&');
+}
+function fromHash(h){
+  if(h.charAt(0)==='%'||h.charAt(0)==='{'||h.charAt(0)==='['){ // notes made with older versions
+    var d=JSON.parse(decodeURIComponent(h));
+    return Array.isArray(d)?{t:d[0],b:d[1]}:d;
+  }
+  var o={};
+  h.split('&').forEach(function(kv){
+    var i=kv.indexOf('=');if(i<0) return;
+    o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '));
+  });
+  if(o.c) o.c='#'+o.c;
+  return o;
+}
 function buildIcs(){
   var start=new Date(st.r),end=new Date(start.getTime()+30*60000);
-  var link=location.href.length<6000?location.href:'';
-  var desc=st.b+(link?'\n\nOpen note: '+link:'');
+  var link=pageUrl()+'#'+toHash(true); // leave out the photo so the link stays short
+  var desc=st.b+'\n\nOpen note: '+link;
   var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Home Screen Notes//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
-    'UID:'+st.id+'@homescreen-notes','DTSTAMP:'+icsDate(new Date()),'DTSTART:'+icsDate(start),'DTEND:'+icsDate(end),
+    'UID:'+st.id+'@homescreen-notes','DTSTAMP:'+icsDate(new Date()),'DTSTART:'+icsLocal(start),'DTEND:'+icsLocal(end),
     'SUMMARY:'+icsText(st.t),'DESCRIPTION:'+icsText(desc)];
-  if(link) L.push('URL:'+link);
+  L.push('URL:'+link);
   if(st.rp) L.push('RRULE:FREQ='+st.rp);
   if(st.al!=='-1') L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsText(st.t),'TRIGGER:-PT'+st.al+'M','END:VALARM');
   L.push('END:VEVENT','END:VCALENDAR');
@@ -278,7 +314,7 @@ $('save').onclick=function(){
   if(!st.t){$('t').focus();return}
   if(st.s==='photo'&&!st.p){alert('Choose a photo first, or pick a different icon style.');return}
   if(!st.id) st.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(st)));
+  history.replaceState(null,'','#'+toHash(false));
   store();
   showView(true);
 };
@@ -296,8 +332,7 @@ $('new').onclick=function(){
   var h=location.hash.slice(1);
   if(!h){showEdit();return}
   try{
-    var d=JSON.parse(decodeURIComponent(h));
-    if(Array.isArray(d)) d={t:d[0],b:d[1]}; // notes made with the first version
+    var d=fromHash(h);
     for(var k in d) st[k]=d[k];
     if(st.id){
       try{var saved=localStorage.getItem('note_'+st.id);if(saved){var s=JSON.parse(saved);for(var k2 in s) st[k2]=s[k2]}}catch(e){}
