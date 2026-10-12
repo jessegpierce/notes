@@ -10,15 +10,16 @@
 <link rel="apple-touch-icon" id="ati" href="notes-icon.png">
 <title>New Note</title>
 <style>
-:root{--bg:#f2f2f7;--card:#fff;--text:#111;--muted:#6b6b70;--line:#d8d8dd;--accent:#007aff;--note:#f5c518}
-@media(prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--muted:#98989f;--line:#38383a}}
+:root{--bg:#f2f2f7;--card:#fff;--text:#111;--muted:#6b6b70;--line:#d8d8dd;--accent:#007aff;--note:#f5c518;--hintbg:#fff6d6;--hintfg:#3a3000;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--muted:#98989f;--line:#38383a;--hintbg:#3a3300;--hintfg:#fff3c2;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--muted:#98989f;--line:#38383a;--hintbg:#3a3300;--hintfg:#fff3c2;color-scheme:dark}
 *{box-sizing:border-box}
-body{font:17px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;margin:0;padding:16px;padding-top:max(16px,env(safe-area-inset-top));background:var(--bg);color:var(--text)}
+body{font:17px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;margin:0;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom));background:var(--bg);color:var(--text)}
 .card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px}
-input[type=text],textarea{width:100%;font:inherit;border:0;outline:0;background:none;color:inherit;padding:0}
+input[type=text],input[type=password],textarea{width:100%;font:inherit;border:0;outline:0;background:none;color:inherit;padding:0}
 #t{font-size:24px;font-weight:700;border-bottom:1px solid var(--line);padding-bottom:10px}
-#b{min-height:30vh;margin-top:12px;resize:vertical}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px;font-weight:600}
+#b{min-height:26vh;margin-top:12px;resize:vertical}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 8px;font-weight:600}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .seg{display:flex;background:var(--bg);border-radius:9px;padding:2px}
 .seg button{flex:1;border:0;background:none;color:inherit;font:inherit;font-size:15px;padding:8px 4px;border-radius:7px}
@@ -27,55 +28,84 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
 .sw.on{outline:3px solid var(--accent);outline-offset:2px}
 .custom{position:relative;overflow:hidden;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)}
 .custom input{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0}
-.opt{margin-top:14px}
+.opt{margin-top:16px}
 #e{width:72px;font-size:34px;text-align:center;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:inherit;padding:6px}
 .filebtn{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600}
 .filebtn input{display:none}
+.fld{display:block;font-size:14px;color:var(--muted);margin-bottom:10px}
+input.box,.fld input,.fld select{display:block;width:100%;margin-top:4px;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;-webkit-appearance:none;appearance:none;min-height:44px}
+.row2{display:flex;gap:10px}.row2 .fld{flex:1}
+.chip{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:16px;padding:6px 12px}
 .preview{display:flex;align-items:center;gap:16px}
 .ico{width:76px;height:76px;border-radius:17px;box-shadow:0 2px 8px rgba(0,0,0,.2);display:block}
 .lbl{font-size:12px;text-align:center;width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
-.btn{font:inherit;font-weight:600;padding:13px 22px;border:0;border-radius:12px;background:var(--accent);color:#fff;width:100%;margin-top:4px}
+.btn{font:inherit;font-weight:600;padding:13px 22px;border:0;border-radius:12px;background:var(--accent);color:#fff;width:100%;margin-top:10px}
 .btn.alt{background:var(--card);color:var(--text)}
-.hint{background:#fff6d6;color:#3a3000;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px}
-@media(prefers-color-scheme:dark){.hint{background:#3a3300;color:#fff3c2}}
+.btn.warn{background:var(--card);color:#ff3b30}
+.hint{background:var(--hintbg);color:var(--hintfg);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px}
 .small{font-size:13px;color:var(--muted);margin-top:8px}
+.err{color:#ff3b30;font-size:15px;margin-top:8px}
 #vw .band{height:8px;border-radius:14px 14px 0 0;margin:-16px -16px 14px;background:var(--note)}
-#vt{margin:0 0 10px;font-size:26px}
+#vt{margin:0 0 10px;font-size:26px;word-wrap:break-word}
 #vb{white-space:pre-wrap;word-wrap:break-word}
-.fld{display:block;font-size:14px;color:var(--muted);margin-bottom:10px}
-.fld input,.fld select{display:block;width:100%;margin-top:4px;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;-webkit-appearance:none;appearance:none;min-height:44px}
-.row2{display:flex;gap:10px}.row2 .fld{flex:1}
+.zs #vb{font-size:15px}.zm #vb{font-size:17px}.zl #vb{font-size:21px}.zxl #vb{font-size:26px}
+.zl #vt{font-size:30px}.zxl #vt{font-size:34px}
+.list{list-style:none;margin:0;padding:0;white-space:normal}
+.list label{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.list li:last-child label{border-bottom:0}
+.list input{width:1.25em;height:1.25em;margin-top:.15em;flex:none;accent-color:var(--accent)}
+.list .done span{text-decoration:line-through;color:var(--muted)}
 .rem{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:15px;color:var(--muted)}
+#lk{text-align:center}
+#lk .lockico{font-size:44px}
+#pinIn{font-size:28px;letter-spacing:.3em;text-align:center;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px;margin-top:12px}
 [hidden]{display:none!important}
 </style></head><body>
 
+<!-- ============ EDITOR ============ -->
 <div id="ed">
   <div class="card">
-    <input type="text" id="t" placeholder="Heading" maxlength="60">
+    <input type="text" id="t" placeholder="Title" maxlength="60">
     <textarea id="b" placeholder="Write your note..."></textarea>
   </div>
 
   <div class="card">
-    <h2>Icon style</h2>
-    <div class="seg" id="style">
-      <button data-s="text">Heading</button>
-      <button data-s="emoji">Emoji</button>
-      <button data-s="photo">Photo</button>
+    <h2>Note type</h2>
+    <div class="seg" data-key="k"><button data-v="">Text</button><button data-v="list">Checklist</button></div>
+    <div class="small" id="listHelp" hidden>Put one item per line. You check items off when you view the note.</div>
+
+    <div class="opt"><h2>Text size</h2>
+      <div class="seg" data-key="z"><button data-v="s">Small</button><button data-v="m">Medium</button><button data-v="l">Large</button><button data-v="xl">Huge</button></div>
     </div>
+    <div class="opt"><h2>Background</h2>
+      <div class="seg" data-key="th"><button data-v="">Match phone</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Icon style</h2>
+    <div class="seg" data-key="s"><button data-v="text">Title</button><button data-v="emoji">Emoji</button><button data-v="photo">Photo</button></div>
 
     <div class="opt" id="emojiOpt" hidden>
       <input id="e" type="text" maxlength="8" value="📝" aria-label="Emoji">
       <div class="small">Tap the box and pick any emoji from your keyboard.</div>
     </div>
-
     <div class="opt" id="photoOpt" hidden>
       <label class="filebtn">Choose photo<input id="pf" type="file" accept="image/*"></label>
       <div class="small">The center of the photo is cropped to a square.</div>
     </div>
-
     <div class="opt" id="colorOpt">
       <h2>Color</h2>
       <div class="row" id="sws"></div>
+    </div>
+    <div class="opt">
+      <h2>Small text on icon (optional)</h2>
+      <input type="text" class="box" id="ic" maxlength="14" placeholder="For example: Oct 14 or Unit 42">
+      <div class="row" style="margin-top:8px">
+        <button class="chip" id="icToday">Today's date</button>
+        <button class="chip" id="icRem">Reminder date</button>
+        <button class="chip" id="icClear">Clear</button>
+      </div>
     </div>
   </div>
 
@@ -98,6 +128,15 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
   </div>
 
   <div class="card">
+    <h2>PIN lock (optional)</h2>
+    <input type="password" class="box" id="pn" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="4 or more numbers">
+    <div class="small" id="pinNow" hidden>This note is locked. Leave the box empty to keep the same PIN, or type a new one to change it.</div>
+    <button class="chip" id="pinRemove" style="margin-top:8px" hidden>Remove PIN</button>
+    <div class="small">The note's text is scrambled with your PIN, so nobody can read it without the PIN, even from the link. <b>If you forget the PIN, the note can't be recovered.</b> The title stays visible because it's shown on the icon.</div>
+    <div class="err" id="pinErr" hidden></div>
+  </div>
+
+  <div class="card">
     <h2>Preview</h2>
     <div class="preview">
       <div><img class="ico" id="pv" alt=""><div class="lbl" id="pl">Note</div></div>
@@ -108,51 +147,62 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
   <button class="btn" id="save">Save</button>
 </div>
 
+<!-- ============ LOCK SCREEN ============ -->
+<div id="lk" hidden>
+  <div class="card">
+    <div class="lockico">🔒</div>
+    <h1 id="lt" style="font-size:24px;margin:8px 0 4px"></h1>
+    <div class="small" style="margin-top:0">Enter the PIN to open this note.</div>
+    <input type="password" id="pinIn" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off">
+    <div class="err" id="lkErr" hidden>Wrong PIN. Try again.</div>
+    <button class="btn" id="unlock">Unlock</button>
+  </div>
+</div>
+
+<!-- ============ VIEW ============ -->
 <div id="vw" hidden>
   <div class="hint" id="hint" hidden><b>Saved.</b> Now tap Safari's Share button, then <b>Add to Home Screen</b>.</div>
   <div class="card"><div class="band"></div><h1 id="vt"></h1><div id="vb"></div>
     <div class="rem" id="vr" hidden></div></div>
   <button class="btn" id="cal" hidden>Add to Calendar</button>
-  <button class="btn alt" id="edit" style="margin-top:10px">Edit</button>
-  <button class="btn alt" id="new" style="margin-top:10px">New note</button>
+  <button class="btn alt" id="edit">Edit</button>
+  <button class="btn alt" id="lockNow" hidden>Lock</button>
+  <button class="btn alt" id="new">New note</button>
 </div>
 
 <script>
 var $=function(i){return document.getElementById(i)};
 var COLORS=['#f5c518','#ff9f0a','#ff453a','#ff2d55','#bf5af2','#5e5ce6','#0a84ff','#30b0c7','#34c759','#8e8e93','#1c1c1e','#ffffff'];
-var st={id:'',t:'',b:'',c:COLORS[0],s:'text',e:'📝',p:'',r:'',rp:'',al:'0'};
+// Everything about a note. Short names keep the link short:
+// t title, b text, k type, z text size, th background, c color, s icon style, e emoji, p photo,
+// ic small icon text, r reminder, rp repeat, al alert, x locked (scrambled) text, id note id
+var KEYS=['t','b','k','z','th','c','s','e','ic','r','rp','al','x','id','p'];
+var DEFAULTS={t:'',b:'',k:'',z:'m',th:'',c:COLORS[0],s:'text',e:'📝',ic:'',r:'',rp:'',al:'0',x:'',id:'',p:''};
+var st=JSON.parse(JSON.stringify(DEFAULTS));
+var pin='';          // PIN for this note while it's unlocked (never saved)
+var lastSaved=null;  // what the link currently holds
+var photoImg=null;
+var standalone=!!window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
 var REPEAT={DAILY:'every day',WEEKLY:'every week',MONTHLY:'every month',YEARLY:'every year'};
 var ALERT={'0':'alert at time of event','10':'alert 10 minutes before','60':'alert 1 hour before','1440':'alert 1 day before','-1':'no alert'};
 
-function icsText(s){return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
-function icsDate(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
-function fold(line){ // calendar files want lines of 75 characters or less
-  var out='';while(line.length>74){out+=line.slice(0,74)+'\r\n ';line=line.slice(74)}return out+line;
-}
-// Local "wall clock" time with no time zone, so Calendar shows it in the phone's own time zone
-function icsLocal(d){
-  var p=function(n){return (n<10?'0':'')+n};
-  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00';
-}
-function pageUrl(){return location.href.split('#')[0]}
-// Readable link: #t=Oil+change&b=Every+5000+hours&c=f5c518 ...
-var DEFAULTS={c:COLORS[0],s:'text',e:'📝',p:'',r:'',rp:'',al:'0',id:''};
+/* ---------- link format: #t=Oil+change&b=Every+5000+hours&c=f5c518 ---------- */
 function enc(v){
   return encodeURIComponent(v).replace(/%20/g,'+').replace(/%2C/g,',').replace(/%3A/g,':').replace(/%2F/g,'/').replace(/%40/g,'@').replace(/%3F/g,'?');
 }
-function toHash(skipPhoto){
-  var parts=['t='+enc(st.t)];
-  if(st.b) parts.push('b='+enc(st.b));
-  ['c','s','e','r','rp','al','id','p'].forEach(function(k){
+function toHash(o,skipPhoto){
+  var parts=[];
+  KEYS.forEach(function(k){
     if(k==='p'&&skipPhoto) return;
-    var v=st[k];
-    if(k==='c') v=String(v).replace('#','');
-    if(v&&v!==String(DEFAULTS[k]).replace('#','')) parts.push(k+'='+enc(v));
+    var v=o[k];if(v===undefined||v===null) return;
+    var d=DEFAULTS[k];
+    if(k==='c'){v=String(v).replace('#','');d=d.replace('#','')}
+    if(k==='t'||(v!==''&&v!==d)) parts.push(k+'='+enc(v));
   });
   return parts.join('&');
 }
 function fromHash(h){
-  if(h.charAt(0)==='%'||h.charAt(0)==='{'||h.charAt(0)==='['){ // notes made with older versions
+  if(/^(%7B|%5B|\{|\[)/i.test(h)){ // notes made with older versions
     var d=JSON.parse(decodeURIComponent(h));
     return Array.isArray(d)?{t:d[0],b:d[1]}:d;
   }
@@ -161,17 +211,130 @@ function fromHash(h){
     var i=kv.indexOf('=');if(i<0) return;
     o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '));
   });
-  if(o.c) o.c='#'+o.c;
+  if(o.c&&o.c.charAt(0)!=='#') o.c='#'+o.c;
   return o;
 }
+
+/* ---------- PIN lock: AES-GCM with a key made from the PIN ---------- */
+function b64u(a){var s='';for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function unb64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';var bin=atob(s),a=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
+async function keyFrom(p,salt){
+  var base=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function lockText(p,text){
+  var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  var ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},await keyFrom(p,salt),new TextEncoder().encode(text)));
+  var all=new Uint8Array(28+ct.length);all.set(salt,0);all.set(iv,16);all.set(ct,28);
+  return b64u(all);
+}
+async function unlockText(p,x){
+  var a=unb64u(x);
+  var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:a.slice(16,28)},await keyFrom(p,a.slice(0,16)),a.slice(28));
+  return new TextDecoder().decode(pt);
+}
+
+/* ---------- saving ---------- */
+async function persist(){
+  var o={};KEYS.forEach(function(k){o[k]=st[k]});
+  if(pin){o.x=await lockText(pin,st.b);o.b=''}else o.x='';
+  st.x=o.x;lastSaved=o;
+  history.replaceState(null,'','#'+toHash(o,false));
+  try{localStorage.setItem('note_'+st.id,JSON.stringify(o))}catch(e){}
+}
+
+/* ---------- checklist ---------- */
+function items(){
+  return st.b.split('\n').filter(function(l){return l.trim()!==''}).map(function(l){
+    var m=/^\[(x| )\]\s?/i.exec(l);
+    return {done:!!(m&&m[1].toLowerCase()==='x'),text:m?l.slice(m[0].length):l};
+  });
+}
+function itemsToText(list){return list.map(function(i){return (i.done?'[x] ':'[ ] ')+i.text}).join('\n')}
+
+/* ---------- icon drawing ---------- */
+function inkFor(hex){
+  var n=parseInt(String(hex).slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;
+  return (0.299*r+0.587*g+0.114*b)>160?'#1c1c1e':'#ffffff';
+}
+function wrap(x,words,max){
+  var lines=[],cur='';
+  for(var i=0;i<words.length;i++){
+    var w=words[i];
+    if(x.measureText(w).width>max) return null;
+    var t=cur?cur+' '+w:w;
+    if(x.measureText(t).width<=max) cur=t; else {lines.push(cur);cur=w}
+  }
+  if(cur) lines.push(cur);
+  return lines;
+}
+function makeIcon(){
+  var photo=st.s==='photo'&&st.p;
+  if(photo&&!(photoImg&&photoImg.complete&&photoImg.naturalWidth)) return st.p;
+  var c=document.createElement('canvas');c.width=c.height=180;
+  var x=c.getContext('2d'),cap=st.ic.trim(),cy=cap?72:90;
+  x.textAlign='center';x.textBaseline='middle';
+  if(photo){
+    x.drawImage(photoImg,0,0,180,180);
+  }else{
+    x.fillStyle=st.c;x.fillRect(0,0,180,180);
+    if(st.s==='emoji'){
+      x.font=(cap?90:112)+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      x.fillText(st.e||'📝',90,cy+(cap?5:8));
+    }else{
+      x.fillStyle=inkFor(st.c);
+      var words=(st.t||'Note').trim().split(/\s+/),maxH=cap?104:130,size,lines;
+      for(size=56;size>=16;size-=2){
+        x.font='700 '+size+'px -apple-system,BlinkMacSystemFont,sans-serif';
+        lines=wrap(x,words,140);
+        if(lines&&lines.length<=3&&lines.length*size*1.12<=maxH) break;
+        lines=null;
+      }
+      if(!lines){ // very long word: cut it to fit
+        size=16;x.font='700 16px -apple-system,sans-serif';lines=[];var cur='';
+        (st.t||'').split('').forEach(function(ch){if(x.measureText(cur+ch).width>150){lines.push(cur);cur=ch}else cur+=ch});
+        lines.push(cur);lines=lines.slice(0,3);
+      }
+      var lh=size*1.12;
+      lines.forEach(function(l,i){x.fillText(l,90,cy+(i-(lines.length-1)/2)*lh)});
+    }
+  }
+  if(cap){ // strip along the bottom with the small text
+    x.fillStyle='rgba(0,0,0,.5)';x.fillRect(0,136,180,44);
+    x.fillStyle='#fff';var fs=24;
+    do{x.font='700 '+fs+'px -apple-system,BlinkMacSystemFont,sans-serif';fs-=1}while(x.measureText(cap).width>160&&fs>12);
+    x.fillText(cap,90,159);
+  }
+  return photo?c.toDataURL('image/jpeg',0.85):c.toDataURL('image/png');
+}
+function loadPhoto(){
+  if(!st.p){photoImg=null;return}
+  photoImg=new Image();
+  photoImg.onload=function(){refreshIcons()};
+  photoImg.src=st.p;
+}
+function refreshIcons(){
+  var icon=makeIcon();
+  $('pv').src=icon;
+  if(!$('vw').hidden) $('ati').href=icon;
+}
+
+/* ---------- calendar ---------- */
+function icsText(s){return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
+function icsUTC(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
+function icsLocal(d){var p=function(n){return (n<10?'0':'')+n};return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00'}
+function fold(line){var out='';while(line.length>74){out+=line.slice(0,74)+'\r\n ';line=line.slice(74)}return out+line}
+function pageUrl(){return location.href.split('#')[0]}
 function buildIcs(){
   var start=new Date(st.r),end=new Date(start.getTime()+30*60000);
-  var link=pageUrl()+'#'+toHash(true); // leave out the photo so the link stays short
-  var desc=st.b+'\n\nOpen note: '+link;
+  var link=pageUrl()+'#'+toHash(lastSaved||st,true); // photo left out so the link stays short
+  var body;
+  if(pin) body='This note is locked. Open it and enter the PIN to read it.';
+  else if(st.k==='list') body=items().map(function(i){return (i.done?'☑ ':'☐ ')+i.text}).join('\n');
+  else body=st.b;
   var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Home Screen Notes//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
-    'UID:'+st.id+'@homescreen-notes','DTSTAMP:'+icsDate(new Date()),'DTSTART:'+icsLocal(start),'DTEND:'+icsLocal(end),
-    'SUMMARY:'+icsText(st.t),'DESCRIPTION:'+icsText(desc)];
-  L.push('URL:'+link);
+    'UID:'+st.id+'@homescreen-notes','DTSTAMP:'+icsUTC(new Date()),'DTSTART:'+icsLocal(start),'DTEND:'+icsLocal(end),
+    'SUMMARY:'+icsText(st.t),'DESCRIPTION:'+icsText(body+'\n\nOpen note: '+link),'URL:'+link];
   if(st.rp) L.push('RRULE:FREQ='+st.rp);
   if(st.al!=='-1') L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsText(st.t),'TRIGGER:-PT'+st.al+'M','END:VALARM');
   L.push('END:VEVENT','END:VCALENDAR');
@@ -185,113 +348,106 @@ function addToCalendar(){
   document.body.appendChild(a);a.click();
   setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},5000);
 }
+function shortDate(d){return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}
 function reminderLine(){
   if(!st.r) return '';
-  var d=new Date(st.r);
-  var when=d.toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+  var when=new Date(st.r).toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
   return '⏰ '+when+(st.rp?', '+REPEAT[st.rp]:'')+' · '+ALERT[st.al];
 }
-var standalone=!!window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
 
-function inkFor(hex){
-  var n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;
-  return (0.299*r+0.587*g+0.114*b)>160?'#1c1c1e':'#ffffff';
+/* ---------- screens ---------- */
+function applyTheme(){
+  if(st.th) document.documentElement.setAttribute('data-theme',st.th);
+  else document.documentElement.removeAttribute('data-theme');
 }
-function wrap(x,words,max){
-  var lines=[],cur='';
-  for(var i=0;i<words.length;i++){
-    var w=words[i];
-    if(x.measureText(w).width>max) return null;
-    var tryL=cur?cur+' '+w:w;
-    if(x.measureText(tryL).width<=max) cur=tryL; else {lines.push(cur);cur=w}
-  }
-  if(cur) lines.push(cur);
-  return lines;
-}
-function makeIcon(){
-  if(st.s==='photo'&&st.p) return st.p;
-  var c=document.createElement('canvas');c.width=c.height=180;
-  var x=c.getContext('2d');
-  x.fillStyle=st.c;x.fillRect(0,0,180,180);
-  x.textAlign='center';x.textBaseline='middle';
-  if(st.s==='emoji'){
-    x.font='112px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
-    x.fillText(st.e||'📝',90,98);
-  }else{
-    x.fillStyle=inkFor(st.c);
-    var words=(st.t||'Note').trim().split(/\s+/),size,lines;
-    for(size=56;size>=16;size-=2){
-      x.font='700 '+size+'px -apple-system,BlinkMacSystemFont,sans-serif';
-      lines=wrap(x,words,140);
-      if(lines&&lines.length<=3&&lines.length*size*1.12<=130) break;
-      lines=null;
-    }
-    if(!lines){ // too long: cut to fit 3 lines at smallest size
-      size=16;x.font='700 16px -apple-system,sans-serif';
-      lines=[];var cur='';
-      (st.t||'').split('').forEach(function(ch){if(x.measureText(cur+ch).width>150){lines.push(cur);cur=ch}else cur+=ch});
-      lines.push(cur);lines=lines.slice(0,3);
-    }
-    var lh=size*1.12;
-    lines.forEach(function(l,i){x.fillText(l,90,90+(i-(lines.length-1)/2)*lh)});
-  }
-  return c.toDataURL('image/png');
-}
-function refreshPreview(){
-  $('pv').src=makeIcon();
-  $('pl').textContent=st.t||'Note';
-  document.querySelectorAll('#style button').forEach(function(b){b.classList.toggle('on',b.dataset.s===st.s)});
+function show(id){['ed','lk','vw'].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+function refreshEditor(){
+  document.querySelectorAll('.seg').forEach(function(g){
+    var k=g.dataset.key;
+    g.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.v===st[k])});
+  });
   $('emojiOpt').hidden=st.s!=='emoji';
   $('photoOpt').hidden=st.s!=='photo';
   $('colorOpt').hidden=st.s==='photo';
+  $('listHelp').hidden=st.k!=='list';
+  $('b').placeholder=st.k==='list'?'One item per line...':'Write your note...';
   document.querySelectorAll('.sw').forEach(function(s){s.classList.toggle('on',s.dataset.c===st.c)});
-  var cust=document.querySelector('.custom');
-  if(cust) cust.classList.toggle('on',COLORS.indexOf(st.c)<0);
+  var cust=document.querySelector('.custom');if(cust) cust.classList.toggle('on',COLORS.indexOf(st.c)<0);
+  $('pl').textContent=st.t||'Note';
+  $('pinNow').hidden=!pin;$('pinRemove').hidden=!pin;
+  applyTheme();refreshIcons();
 }
-function buildSwatches(){
-  var box=$('sws');
-  COLORS.forEach(function(col){
-    var b=document.createElement('button');b.className='sw';b.style.background=col;b.dataset.c=col;b.setAttribute('aria-label',col);
-    b.onclick=function(){st.c=col;refreshPreview()};
-    box.appendChild(b);
+function showEdit(){
+  $('t').value=st.t;
+  $('b').value=st.k==='list'?items().map(function(i){return i.text}).join('\n'):st.b;
+  $('e').value=st.e;$('ic').value=st.ic;
+  $('rd').value=st.r;$('rp').value=st.rp;$('al').value=st.al;
+  $('pn').value='';$('pinErr').hidden=true;
+  $('standNote').hidden=!standalone;
+  show('ed');refreshEditor();
+}
+function renderBody(){
+  var vb=$('vb');vb.innerHTML='';
+  if(st.k!=='list'){vb.textContent=st.b;return}
+  var ul=document.createElement('ul');ul.className='list';
+  items().forEach(function(it,i){
+    var li=document.createElement('li'),lab=document.createElement('label'),cb=document.createElement('input'),sp=document.createElement('span');
+    cb.type='checkbox';cb.checked=it.done;sp.textContent=it.text;
+    if(it.done) lab.className='done';
+    cb.onchange=function(){
+      var list=items();list[i].done=cb.checked;st.b=itemsToText(list);
+      lab.className=cb.checked?'done':'';persist();
+    };
+    lab.appendChild(cb);lab.appendChild(sp);li.appendChild(lab);ul.appendChild(li);
   });
-  var cu=document.createElement('label');cu.className='sw custom';cu.title='Custom color';
-  var inp=document.createElement('input');inp.type='color';inp.value='#f5c518';
-  inp.oninput=function(){st.c=inp.value;refreshPreview()};
-  cu.appendChild(inp);box.appendChild(cu);
+  vb.appendChild(ul);
 }
-function applyHead(){
-  var icon=makeIcon();
-  $('ati').href=icon;
+function showView(fresh){
+  applyTheme();
+  document.body.className='z'+(st.z||'m');
   document.title=st.t||'Note';
   document.querySelector('meta[name=apple-mobile-web-app-title]').content=st.t||'Note';
   document.documentElement.style.setProperty('--note',st.s==='photo'?'var(--accent)':st.c);
-}
-function showView(fresh){
-  applyHead();
-  $('vt').textContent=st.t;$('vb').textContent=st.b;
+  $('vt').textContent=st.t;renderBody();
   $('vr').textContent=reminderLine();$('vr').hidden=!st.r;$('cal').hidden=!st.r;
+  $('lockNow').hidden=!pin;
   $('hint').hidden=!(fresh&&!standalone);
-  $('ed').hidden=true;$('vw').hidden=false;
-  window.scrollTo(0,0);
+  show('vw');
+  $('ati').href=makeIcon();
 }
-function showEdit(){
-  $('t').value=st.t;$('b').value=st.b;$('e').value=st.e;
-  $('rd').value=st.r;$('rp').value=st.rp;$('al').value=st.al;
-  $('standNote').hidden=!standalone;
-  refreshPreview();
-  $('vw').hidden=true;$('ed').hidden=false;
-}
-function store(){
-  try{localStorage.setItem('note_'+st.id,JSON.stringify(st))}catch(e){}
+function showLock(){
+  applyTheme();
+  document.title=st.t||'Note';
+  $('lt').textContent=st.t;$('pinIn').value='';$('lkErr').hidden=true;
+  show('lk');
+  $('ati').href=makeIcon();
+  setTimeout(function(){$('pinIn').focus()},50);
 }
 
-// wiring
-buildSwatches();
-$('t').oninput=function(){st.t=this.value;refreshPreview()};
-$('b').oninput=function(){st.b=this.value};
-$('e').oninput=function(){st.e=this.value.trim();refreshPreview()};
-document.querySelectorAll('#style button').forEach(function(b){b.onclick=function(){st.s=b.dataset.s;refreshPreview()}});
+/* ---------- wiring ---------- */
+(function(){
+  var box=$('sws');
+  COLORS.forEach(function(col){
+    var b=document.createElement('button');b.className='sw';b.style.background=col;b.dataset.c=col;b.setAttribute('aria-label',col);
+    b.onclick=function(){st.c=col;refreshEditor()};box.appendChild(b);
+  });
+  var cu=document.createElement('label');cu.className='sw custom';cu.title='Custom color';
+  var inp=document.createElement('input');inp.type='color';inp.value='#f5c518';
+  inp.oninput=function(){st.c=inp.value;refreshEditor()};
+  cu.appendChild(inp);box.appendChild(cu);
+})();
+document.querySelectorAll('.seg').forEach(function(g){
+  g.querySelectorAll('button').forEach(function(b){b.onclick=function(){st[g.dataset.key]=b.dataset.v;refreshEditor()}});
+});
+$('t').oninput=function(){st.t=this.value;refreshEditor()};
+$('e').oninput=function(){st.e=this.value.trim();refreshIcons()};
+$('ic').oninput=function(){st.ic=this.value;refreshIcons()};
+$('icToday').onclick=function(){st.ic=$('ic').value=shortDate(new Date());refreshIcons()};
+$('icRem').onclick=function(){
+  if(!$('rd').value){alert('Set a reminder date first (in the Reminder section).');return}
+  st.ic=$('ic').value=shortDate(new Date($('rd').value));refreshIcons();
+};
+$('icClear').onclick=function(){st.ic=$('ic').value='';refreshIcons()};
 $('pf').onchange=function(){
   var f=this.files&&this.files[0];if(!f) return;
   var r=new FileReader();
@@ -302,42 +458,69 @@ $('pf').onchange=function(){
       var x=c.getContext('2d'),s=Math.min(img.width,img.height);
       x.fillStyle='#fff';x.fillRect(0,0,180,180);
       x.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,180,180);
-      st.p=c.toDataURL('image/jpeg',0.8);refreshPreview();
+      st.p=c.toDataURL('image/jpeg',0.8);loadPhoto();
     };
     img.src=r.result;
   };
   r.readAsDataURL(f);
 };
-$('save').onclick=function(){
-  st.t=$('t').value.trim();st.b=$('b').value;
-  st.r=$('rd').value;st.rp=$('rp').value;st.al=$('al').value;
+$('pinRemove').onclick=function(){
+  if(confirm('Remove the PIN from this note?')){pin='';refreshEditor()}
+};
+$('save').onclick=async function(){
+  st.t=$('t').value.trim();
   if(!st.t){$('t').focus();return}
+  var raw=$('b').value;
+  if(st.k==='list'){ // keep checkmarks on items that didn't change
+    var old=items();
+    st.b=itemsToText(raw.split('\n').filter(function(l){return l.trim()!==''}).map(function(l){
+      var m=old.find(function(o){return o.text===l});return {done:!!(m&&m.done),text:l};
+    }));
+  }else st.b=raw;
+  st.e=$('e').value.trim()||'📝';st.ic=$('ic').value.trim();
+  st.r=$('rd').value;st.rp=$('rp').value;st.al=$('al').value;
   if(st.s==='photo'&&!st.p){alert('Choose a photo first, or pick a different icon style.');return}
+  var np=$('pn').value.trim();
+  if(np){
+    if(!/^\d{4,12}$/.test(np)){$('pinErr').textContent='The PIN must be 4 to 12 numbers.';$('pinErr').hidden=false;return}
+    pin=np;
+  }
   if(!st.id) st.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  history.replaceState(null,'','#'+toHash(false));
-  store();
+  try{await persist()}
+  catch(e){
+    pin='';
+    $('pinErr').textContent='The PIN lock only works when the page is opened from an https:// address. The note was not saved.';
+    $('pinErr').hidden=false;return;
+  }
   showView(true);
 };
 $('edit').onclick=showEdit;
 $('cal').onclick=addToCalendar;
+$('lockNow').onclick=function(){st.b='';pin='';showLock()};
+$('unlock').onclick=async function(){
+  var p=$('pinIn').value.trim();if(!p) return;
+  try{st.b=await unlockText(p,st.x);pin=p;showView(false)}
+  catch(e){$('lkErr').hidden=false;$('pinIn').value='';$('pinIn').focus()}
+};
+$('pinIn').onkeydown=function(e){if(e.key==='Enter') $('unlock').onclick()};
 $('new').onclick=function(){
-  if(standalone){ // open a fresh editor in Safari, so this icon keeps its note
-    window.open(location.href.split('#')[0],'_blank');return;
-  }
-  location.href=location.href.split('#')[0];
+  if(standalone){window.open(pageUrl(),'_blank');return} // opens Safari, so this icon keeps its note
+  location.href=pageUrl();
 };
 
-// load
+/* ---------- open ---------- */
 (function(){
   var h=location.hash.slice(1);
   if(!h){showEdit();return}
   try{
     var d=fromHash(h);
-    for(var k in d) st[k]=d[k];
-    if(st.id){
-      try{var saved=localStorage.getItem('note_'+st.id);if(saved){var s=JSON.parse(saved);for(var k2 in s) st[k2]=s[k2]}}catch(e){}
+    for(var k in d) if(k in DEFAULTS) st[k]=String(d[k]);
+    if(st.id){ // newer edits made on this phone
+      try{var saved=localStorage.getItem('note_'+st.id);if(saved){var s=JSON.parse(saved);for(var k2 in s) if(k2 in DEFAULTS) st[k2]=String(s[k2])}}catch(e){}
     }
-    showView(false);
+    lastSaved={};KEYS.forEach(function(k){lastSaved[k]=st[k]});
+    loadPhoto();
+    if(st.x) showLock(); else showView(false);
   }catch(e){showEdit()}
 })();
 </script>
