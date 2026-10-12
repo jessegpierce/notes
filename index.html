@@ -1,55 +1,246 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><title>New Note</title>
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Note">
+<link rel="apple-touch-icon" id="ati" href="">
+<title>New Note</title>
 <style>
-body{font:17px -apple-system,sans-serif;margin:0;padding:16px;background:#fff;color:#111}
-input,textarea{width:100%;box-sizing:border-box;font:inherit;border:0;outline:0;background:none;color:inherit}
-input{font-size:26px;font-weight:700;border-bottom:1px solid #ddd;padding-bottom:8px}
-textarea{height:55vh;margin-top:12px;resize:none}
-button{font:inherit;font-weight:600;padding:12px 24px;border:0;border-radius:10px;background:#007aff;color:#fff;margin-top:8px}
-#e{background:#eee;color:#111}
-#vb{white-space:pre-wrap;line-height:1.5;margin-bottom:16px}
-#hint{background:#fff6d6;border-radius:10px;padding:12px;margin-bottom:16px}
-@media(prefers-color-scheme:dark){body{background:#000;color:#eee}input{border-color:#333}#e{background:#333;color:#eee}#hint{background:#3a3300}}
+:root{--bg:#f2f2f7;--card:#fff;--text:#111;--muted:#6b6b70;--line:#d8d8dd;--accent:#007aff;--note:#f5c518}
+@media(prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--muted:#98989f;--line:#38383a}}
+*{box-sizing:border-box}
+body{font:17px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;margin:0;padding:16px;padding-top:max(16px,env(safe-area-inset-top));background:var(--bg);color:var(--text)}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px}
+input[type=text],textarea{width:100%;font:inherit;border:0;outline:0;background:none;color:inherit;padding:0}
+#t{font-size:24px;font-weight:700;border-bottom:1px solid var(--line);padding-bottom:10px}
+#b{min-height:30vh;margin-top:12px;resize:vertical}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px;font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:flex;background:var(--bg);border-radius:9px;padding:2px}
+.seg button{flex:1;border:0;background:none;color:inherit;font:inherit;font-size:15px;padding:8px 4px;border-radius:7px}
+.seg button.on{background:var(--card);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.sw{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);padding:0;cursor:pointer}
+.sw.on{outline:3px solid var(--accent);outline-offset:2px}
+.custom{position:relative;overflow:hidden;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)}
+.custom input{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0}
+.opt{margin-top:14px}
+#e{width:72px;font-size:34px;text-align:center;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:inherit;padding:6px}
+.filebtn{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600}
+.filebtn input{display:none}
+.preview{display:flex;align-items:center;gap:16px}
+.ico{width:76px;height:76px;border-radius:17px;box-shadow:0 2px 8px rgba(0,0,0,.2);display:block}
+.lbl{font-size:12px;text-align:center;width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
+.btn{font:inherit;font-weight:600;padding:13px 22px;border:0;border-radius:12px;background:var(--accent);color:#fff;width:100%;margin-top:4px}
+.btn.alt{background:var(--card);color:var(--text)}
+.hint{background:#fff6d6;color:#3a3000;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px}
+@media(prefers-color-scheme:dark){.hint{background:#3a3300;color:#fff3c2}}
+.small{font-size:13px;color:var(--muted);margin-top:8px}
+#vw .band{height:8px;border-radius:14px 14px 0 0;margin:-16px -16px 14px;background:var(--note)}
+#vt{margin:0 0 10px;font-size:26px}
+#vb{white-space:pre-wrap;word-wrap:break-word}
+[hidden]{display:none!important}
 </style></head><body>
-<div id="ed"><input id="t" placeholder="Heading"><textarea id="b" placeholder="Write your note..."></textarea><button id="s">Save</button></div>
-<div id="vw" hidden><div id="hint" hidden>Saved. Now tap the Share button in Safari, then "Add to Home Screen". The icon will use your heading.</div><h1 id="vt"></h1><div id="vb"></div><button id="e">Edit</button></div>
+
+<div id="ed">
+  <div class="card">
+    <input type="text" id="t" placeholder="Heading" maxlength="60">
+    <textarea id="b" placeholder="Write your note..."></textarea>
+  </div>
+
+  <div class="card">
+    <h2>Icon style</h2>
+    <div class="seg" id="style">
+      <button data-s="text">Heading</button>
+      <button data-s="emoji">Emoji</button>
+      <button data-s="photo">Photo</button>
+    </div>
+
+    <div class="opt" id="emojiOpt" hidden>
+      <input id="e" type="text" maxlength="8" value="📝" aria-label="Emoji">
+      <div class="small">Tap the box and pick any emoji from your keyboard.</div>
+    </div>
+
+    <div class="opt" id="photoOpt" hidden>
+      <label class="filebtn">Choose photo<input id="pf" type="file" accept="image/*"></label>
+      <div class="small">The center of the photo is cropped to a square.</div>
+    </div>
+
+    <div class="opt" id="colorOpt">
+      <h2>Color</h2>
+      <div class="row" id="sws"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Preview</h2>
+    <div class="preview">
+      <div><img class="ico" id="pv" alt=""><div class="lbl" id="pl">Note</div></div>
+      <div class="small" id="standNote" hidden>You're editing from the Home Screen. Text changes save here. Icon changes only show if you add the note to the Home Screen again.</div>
+    </div>
+  </div>
+
+  <button class="btn" id="save">Save</button>
+</div>
+
+<div id="vw" hidden>
+  <div class="hint" id="hint" hidden><b>Saved.</b> Now tap Safari's Share button, then <b>Add to Home Screen</b>.</div>
+  <div class="card"><div class="band"></div><h1 id="vt"></h1><div id="vb"></div></div>
+  <button class="btn alt" id="edit">Edit</button>
+  <button class="btn alt" id="new" style="margin-top:10px">New note</button>
+</div>
+
 <script>
 var $=function(i){return document.getElementById(i)};
-function icon(t){
+var COLORS=['#f5c518','#ff9f0a','#ff453a','#ff2d55','#bf5af2','#5e5ce6','#0a84ff','#30b0c7','#34c759','#8e8e93','#1c1c1e','#ffffff'];
+var st={id:'',t:'',b:'',c:COLORS[0],s:'text',e:'📝',p:''};
+var standalone=!!window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+
+function inkFor(hex){
+  var n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;
+  return (0.299*r+0.587*g+0.114*b)>160?'#1c1c1e':'#ffffff';
+}
+function wrap(x,words,max){
+  var lines=[],cur='';
+  for(var i=0;i<words.length;i++){
+    var w=words[i];
+    if(x.measureText(w).width>max) return null;
+    var tryL=cur?cur+' '+w:w;
+    if(x.measureText(tryL).width<=max) cur=tryL; else {lines.push(cur);cur=w}
+  }
+  if(cur) lines.push(cur);
+  return lines;
+}
+function makeIcon(){
+  if(st.s==='photo'&&st.p) return st.p;
   var c=document.createElement('canvas');c.width=c.height=180;
   var x=c.getContext('2d');
-  x.fillStyle='#f5c518';x.fillRect(0,0,180,180);
-  x.fillStyle='#222';x.textAlign='center';x.textBaseline='middle';
-  var w=t.split(/\s+/).slice(0,3),n=w.length,size=40;
-  x.font='bold '+size+'px sans-serif';
-  w.forEach(function(s){while(x.measureText(s).width>160&&size>12){size-=2;x.font='bold '+size+'px sans-serif'}});
-  w.forEach(function(s,i){x.fillText(s,90,90+(i-(n-1)/2)*(size+8))});
+  x.fillStyle=st.c;x.fillRect(0,0,180,180);
+  x.textAlign='center';x.textBaseline='middle';
+  if(st.s==='emoji'){
+    x.font='112px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    x.fillText(st.e||'📝',90,98);
+  }else{
+    x.fillStyle=inkFor(st.c);
+    var words=(st.t||'Note').trim().split(/\s+/),size,lines;
+    for(size=56;size>=16;size-=2){
+      x.font='700 '+size+'px -apple-system,BlinkMacSystemFont,sans-serif';
+      lines=wrap(x,words,140);
+      if(lines&&lines.length<=3&&lines.length*size*1.12<=130) break;
+      lines=null;
+    }
+    if(!lines){ // too long: cut to fit 3 lines at smallest size
+      size=16;x.font='700 16px -apple-system,sans-serif';
+      lines=[];var cur='';
+      (st.t||'').split('').forEach(function(ch){if(x.measureText(cur+ch).width>150){lines.push(cur);cur=ch}else cur+=ch});
+      lines.push(cur);lines=lines.slice(0,3);
+    }
+    var lh=size*1.12;
+    lines.forEach(function(l,i){x.fillText(l,90,90+(i-(lines.length-1)/2)*lh)});
+  }
   return c.toDataURL('image/png');
 }
-function show(t,b,fresh){
-  document.title=t;
-  var l=document.querySelector('link[rel=apple-touch-icon]');
-  if(!l){l=document.createElement('link');l.rel='apple-touch-icon';document.head.appendChild(l)}
-  l.href=icon(t);
-  var m=document.querySelector('meta[name=apple-mobile-web-app-title]');
-  if(!m){m=document.createElement('meta');m.name='apple-mobile-web-app-title';document.head.appendChild(m)}
-  m.content=t.slice(0,12);
-  $('vt').textContent=t;$('vb').textContent=b;
-  $('hint').hidden=!fresh;
-  $('ed').hidden=true;$('vw').hidden=false;
+function refreshPreview(){
+  $('pv').src=makeIcon();
+  $('pl').textContent=st.t||'Note';
+  document.querySelectorAll('#style button').forEach(function(b){b.classList.toggle('on',b.dataset.s===st.s)});
+  $('emojiOpt').hidden=st.s!=='emoji';
+  $('photoOpt').hidden=st.s!=='photo';
+  $('colorOpt').hidden=st.s==='photo';
+  document.querySelectorAll('.sw').forEach(function(s){s.classList.toggle('on',s.dataset.c===st.c)});
+  var cust=document.querySelector('.custom');
+  if(cust) cust.classList.toggle('on',COLORS.indexOf(st.c)<0);
 }
-$('s').onclick=function(){
-  var t=$('t').value.trim(),b=$('b').value;
-  if(!t){$('t').focus();return}
-  location.hash=encodeURIComponent(JSON.stringify([t,b]));
-  show(t,b,true);
-};
-$('e').onclick=function(){
-  $('t').value=$('vt').textContent;$('b').value=$('vb').textContent;
-  document.title='New Note';
+function buildSwatches(){
+  var box=$('sws');
+  COLORS.forEach(function(col){
+    var b=document.createElement('button');b.className='sw';b.style.background=col;b.dataset.c=col;b.setAttribute('aria-label',col);
+    b.onclick=function(){st.c=col;refreshPreview()};
+    box.appendChild(b);
+  });
+  var cu=document.createElement('label');cu.className='sw custom';cu.title='Custom color';
+  var inp=document.createElement('input');inp.type='color';inp.value='#f5c518';
+  inp.oninput=function(){st.c=inp.value;refreshPreview()};
+  cu.appendChild(inp);box.appendChild(cu);
+}
+function applyHead(){
+  var icon=makeIcon();
+  $('ati').href=icon;
+  document.title=st.t||'Note';
+  document.querySelector('meta[name=apple-mobile-web-app-title]').content=st.t||'Note';
+  document.documentElement.style.setProperty('--note',st.s==='photo'?'var(--accent)':st.c);
+}
+function showView(fresh){
+  applyHead();
+  $('vt').textContent=st.t;$('vb').textContent=st.b;
+  $('hint').hidden=!(fresh&&!standalone);
+  $('ed').hidden=true;$('vw').hidden=false;
+  window.scrollTo(0,0);
+}
+function showEdit(){
+  $('t').value=st.t;$('b').value=st.b;$('e').value=st.e;
+  $('standNote').hidden=!standalone;
+  refreshPreview();
   $('vw').hidden=true;$('ed').hidden=false;
+}
+function store(){
+  try{localStorage.setItem('note_'+st.id,JSON.stringify(st))}catch(e){}
+}
+
+// wiring
+buildSwatches();
+$('t').oninput=function(){st.t=this.value;refreshPreview()};
+$('b').oninput=function(){st.b=this.value};
+$('e').oninput=function(){st.e=this.value.trim();refreshPreview()};
+document.querySelectorAll('#style button').forEach(function(b){b.onclick=function(){st.s=b.dataset.s;refreshPreview()}});
+$('pf').onchange=function(){
+  var f=this.files&&this.files[0];if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var c=document.createElement('canvas');c.width=c.height=180;
+      var x=c.getContext('2d'),s=Math.min(img.width,img.height);
+      x.fillStyle='#fff';x.fillRect(0,0,180,180);
+      x.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,180,180);
+      st.p=c.toDataURL('image/jpeg',0.8);refreshPreview();
+    };
+    img.src=r.result;
+  };
+  r.readAsDataURL(f);
 };
-try{
+$('save').onclick=function(){
+  st.t=$('t').value.trim();st.b=$('b').value;
+  if(!st.t){$('t').focus();return}
+  if(st.s==='photo'&&!st.p){alert('Choose a photo first, or pick a different icon style.');return}
+  if(!st.id) st.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(st)));
+  store();
+  showView(true);
+};
+$('edit').onclick=showEdit;
+$('new').onclick=function(){
+  if(standalone){ // open a fresh editor in Safari, so this icon keeps its note
+    window.open(location.href.split('#')[0],'_blank');return;
+  }
+  location.href=location.href.split('#')[0];
+};
+
+// load
+(function(){
   var h=location.hash.slice(1);
-  if(h){var d=JSON.parse(decodeURIComponent(h));show(d[0],d[1],false)}
-}catch(e){}
-</script></body></html>
+  if(!h){showEdit();return}
+  try{
+    var d=JSON.parse(decodeURIComponent(h));
+    if(Array.isArray(d)) d={t:d[0],b:d[1]}; // notes made with the first version
+    for(var k in d) st[k]=d[k];
+    if(st.id){
+      try{var saved=localStorage.getItem('note_'+st.id);if(saved){var s=JSON.parse(saved);for(var k2 in s) st[k2]=s[k2]}}catch(e){}
+    }
+    showView(false);
+  }catch(e){showEdit()}
+})();
+</script>
+</body></html>
