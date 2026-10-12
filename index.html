@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Note">
 <link rel="icon" type="image/png" sizes="180x180" href="notes-icon.png">
 <link rel="apple-touch-icon" id="ati" href="notes-icon.png">
-<title>New Note</title>
+<title>Note</title>
 <style>
 :root{--bg:#f2f2f7;--card:#fff;--text:#111;--muted:#6b6b70;--line:#d8d8dd;--accent:#007aff;--note:#f5c518;--hintbg:#fff6d6;--hintfg:#3a3000;color-scheme:light}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--muted:#98989f;--line:#38383a;--hintbg:#3a3300;--hintfg:#fff3c2;color-scheme:dark}}
@@ -18,7 +18,9 @@ body{font:17px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;margin:0;padding
 .card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px}
 input[type=text],input[type=password],textarea{width:100%;font:inherit;border:0;outline:0;background:none;color:inherit;padding:0}
 #t{font-size:24px;font-weight:700;border-bottom:1px solid var(--line);padding-bottom:10px}
-#b{min-height:26vh;margin-top:12px;resize:vertical}
+#b{min-height:26vh;margin-top:8px;resize:vertical}
+.tools{display:flex;align-items:center;gap:10px;margin-top:10px}
+.tools button{font:inherit;font-size:17px;width:40px;height:34px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 8px;font-weight:600}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .seg{display:flex;background:var(--bg);border-radius:9px;padding:2px}
@@ -66,6 +68,7 @@ input.box,.fld input,.fld select{display:block;width:100%;margin-top:4px;font:in
 <div id="ed">
   <div class="card">
     <input type="text" id="t" placeholder="Title" maxlength="60">
+    <div class="tools"><button id="boldBtn" type="button" aria-label="Bold"><b>B</b></button><span class="small" style="margin:0">Select words, then tap <b>B</b> to make them bold.</span></div>
     <textarea id="b" placeholder="Write your note..."></textarea>
   </div>
 
@@ -165,6 +168,8 @@ input.box,.fld input,.fld select{display:block;width:100%;margin-top:4px;font:in
   <div class="card"><div class="band"></div><h1 id="vt"></h1><div id="vb"></div>
     <div class="rem" id="vr" hidden></div></div>
   <button class="btn" id="cal" hidden>Add to Calendar</button>
+  <button class="btn alt" id="share">Share</button>
+  <div class="small" id="shareMsg" hidden style="text-align:center"></div>
   <button class="btn alt" id="edit">Edit</button>
   <button class="btn alt" id="lockNow" hidden>Lock</button>
   <button class="btn alt" id="new">New note</button>
@@ -241,6 +246,26 @@ async function persist(){
   st.x=o.x;lastSaved=o;
   history.replaceState(null,'','#'+toHash(o,false));
   try{localStorage.setItem('note_'+st.id,JSON.stringify(o))}catch(e){}
+}
+
+/* ---------- bold: **words** ---------- */
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmt(s){return esc(s).replace(/\*\*([^\n]+?)\*\*/g,'<b>$1</b>')}
+function plain(s){return s.replace(/\*\*([^\n]+?)\*\*/g,'$1')}
+function makeBold(){
+  var ta=$('b'),a=ta.selectionStart,z=ta.selectionEnd,v=ta.value,sel=v.slice(a,z);
+  if(sel&&/^\*\*[\s\S]*\*\*$/.test(sel)&&sel.length>4){ // already bold: undo
+    ta.value=v.slice(0,a)+sel.slice(2,-2)+v.slice(z);ta.setSelectionRange(a,z-4);
+  }else if(v.slice(a-2,a)==='**'&&v.slice(z,z+2)==='**'){ // selection sits inside ** **: undo
+    ta.value=v.slice(0,a-2)+sel+v.slice(z+2);ta.setSelectionRange(a-2,z-2);
+  }else if(sel){
+    var lead=sel.match(/^\s*/)[0],trail=sel.match(/\s*$/)[0],core=sel.trim(); // keep spaces outside the marks
+    ta.value=v.slice(0,a)+lead+'**'+core+'**'+trail+v.slice(z);
+    ta.setSelectionRange(a+lead.length+2,a+lead.length+2+core.length);
+  }else{
+    ta.value=v.slice(0,a)+'**bold text**'+v.slice(z);ta.setSelectionRange(a+2,a+11);
+  }
+  ta.focus();
 }
 
 /* ---------- checklist ---------- */
@@ -330,8 +355,8 @@ function buildIcs(){
   var link=pageUrl()+'#'+toHash(lastSaved||st,true); // photo left out so the link stays short
   var body;
   if(pin) body='This note is locked. Open it and enter the PIN to read it.';
-  else if(st.k==='list') body=items().map(function(i){return (i.done?'☑ ':'☐ ')+i.text}).join('\n');
-  else body=st.b;
+  else if(st.k==='list') body=items().map(function(i){return (i.done?'☑ ':'☐ ')+plain(i.text)}).join('\n');
+  else body=plain(st.b);
   var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Home Screen Notes//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
     'UID:'+st.id+'@homescreen-notes','DTSTAMP:'+icsUTC(new Date()),'DTSTART:'+icsLocal(start),'DTEND:'+icsLocal(end),
     'SUMMARY:'+icsText(st.t),'DESCRIPTION:'+icsText(body+'\n\nOpen note: '+link),'URL:'+link];
@@ -388,11 +413,11 @@ function showEdit(){
 }
 function renderBody(){
   var vb=$('vb');vb.innerHTML='';
-  if(st.k!=='list'){vb.textContent=st.b;return}
+  if(st.k!=='list'){vb.innerHTML=fmt(st.b);return}
   var ul=document.createElement('ul');ul.className='list';
   items().forEach(function(it,i){
     var li=document.createElement('li'),lab=document.createElement('label'),cb=document.createElement('input'),sp=document.createElement('span');
-    cb.type='checkbox';cb.checked=it.done;sp.textContent=it.text;
+    cb.type='checkbox';cb.checked=it.done;sp.innerHTML=fmt(it.text);
     if(it.done) lab.className='done';
     cb.onchange=function(){
       var list=items();list[i].done=cb.checked;st.b=itemsToText(list);
@@ -496,6 +521,22 @@ $('save').onclick=async function(){
 };
 $('edit').onclick=showEdit;
 $('cal').onclick=addToCalendar;
+// keep the text selected when the B button is tapped
+$('boldBtn').addEventListener('pointerdown',function(e){e.preventDefault()});
+$('boldBtn').addEventListener('mousedown',function(e){e.preventDefault()});
+$('boldBtn').onclick=makeBold;
+$('share').onclick=async function(){
+  // the photo is left out so the link stays short; the person you send it to sees a Title or Emoji icon instead
+  var link=pageUrl()+'#'+toHash(lastSaved||st,true);
+  var msg=$('shareMsg');msg.hidden=true;
+  if(navigator.share){
+    try{await navigator.share({title:st.t,url:link});return}
+    catch(e){if(e&&e.name==='AbortError') return}
+  }
+  try{await navigator.clipboard.writeText(link);msg.textContent='Link copied. Paste it into a text or email.'}
+  catch(e){prompt('Copy this link:',link);return}
+  msg.hidden=false;
+};
 $('lockNow').onclick=function(){st.b='';pin='';showLock()};
 $('unlock').onclick=async function(){
   var p=$('pinIn').value.trim();if(!p) return;
